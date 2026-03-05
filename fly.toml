@@ -1,0 +1,30 @@
+## See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'wandering-sky-2066'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  SERVER_HOST = '0.0.0.0'
+  SERVER_PORT = '8080'
+
+# This demo runs on a single instance for simplicity. In-memory state
+# (pending leads, active sessions, AMD signals) is not shared across machines.
+# To scale to multiple instances, use Fly.io's fly-replay header to route
+# AMD callbacks and WebSocket connections to the machine holding the session.
+# See: https://fly.io/docs/networking/dynamic-request-routing/
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'suspend'
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512
