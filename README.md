@@ -78,21 +78,21 @@ When the call connects, the server doesn't know if it's a human or voicemail. It
 
 ### Key Technical Concepts
 
-**Outbound call initiation**: The server actively places calls via the Twilio REST API with inline TwiML. This is the inverse of inbound, where the server passively receives calls. The server still needs a public URL because Twilio opens a WebSocket back to stream audio.
+- **Outbound call initiation**: The server actively places calls via the Twilio REST API with inline TwiML. This is the inverse of inbound, where the server passively receives calls. The server still needs a public URL because Twilio opens a WebSocket back to stream audio.
 
-**Single WebSocket bridge**: The core of the system is `VoiceAgentSession`, which bridges two WebSocket connections (one to Twilio, one to Deepgram). It translates between Twilio's JSON-based protocol and Deepgram's binary audio protocol.
+- **Single WebSocket bridge**: The core of the system is `VoiceAgentSession`, which bridges two WebSocket connections (one to Twilio, one to Deepgram). It translates between Twilio's JSON-based protocol and Deepgram's binary audio protocol.
 
-**Lead context injection**: The agent's system prompt is built dynamically with lead data from the `POST /make-call` request. The agent knows the caller's name, property details, and quote request before the conversation starts.
+- **Lead context injection**: The agent's system prompt is built dynamically with lead data from the `POST /make-call` request. The agent knows the caller's name, property details, and quote request before the conversation starts.
 
-**Barge-in**: When the Deepgram Voice Agent detects that the user started speaking, the server sends a Twilio "clear" event to immediately stop playing agent audio.
+- **Barge-in**: When the Deepgram Voice Agent detects that the user started speaking, the server sends a Twilio "clear" event to immediately stop playing agent audio.
 
-**Function calls**: The Deepgram Voice Agent API supports tool use. The agent can check consultation availability, book appointments, and post structured call outcomes back to a CRM-like backend.
+- **Function calls**: The Deepgram Voice Agent API supports tool use. The agent can check consultation availability, book appointments, and post structured call outcomes back to a CRM-like backend.
 
-**Structured call outcomes**: The `update_lead` function captures the full call outcome — disposition, verified info, new info gathered, and a natural language summary — and logs it to the console. In production, this payload would go to a CRM, webhook, or database.
+- **Structured call outcomes**: The `update_lead` function captures the full call outcome — disposition, verified info, new info gathered, and a natural language summary — and logs it to the console. In production, this payload would go to a CRM, webhook, or database.
 
-**Answering machine detection**: Twilio's async AMD detects whether a human or voicemail answered. The session buffers audio until the result arrives, then branches accordingly. If AMD detects a machine after the voice agent has already started (late detection), the session tears down the Deepgram connection and switches to voicemail delivery mid-call.
+- **Answering machine detection**: Twilio's async AMD detects whether a human or voicemail answered. The session buffers audio until the result arrives, then branches accordingly. If AMD detects a machine after the voice agent has already started (late detection), the session tears down the Deepgram connection and switches to voicemail delivery mid-call.
 
-**Silence detection**: A silence monitor tracks whether the caller is responding. If the caller goes silent for 60 seconds, the agent prompts them ("Are you still there?") and eventually ends the call. Uses Deepgram's `InjectAgentMessage` to make the agent speak each prompt naturally.
+- **Silence detection**: A silence monitor tracks whether the caller is responding. If the caller goes silent for 60 seconds, the agent prompts them ("Are you still there?") and eventually ends the call. Uses Deepgram's `InjectAgentMessage` to make the agent speak each prompt naturally.
 
 For a deeper look at the call flow, session lifecycle, and component details, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -161,6 +161,7 @@ Your phone rings. The voice agent runs through the insurance lead follow-up conv
 python setup.py --twilio-only       # Skip Fly.io, provide your own URL
 python setup.py --status            # Show current config
 python setup.py --teardown          # Clean up deployment
+python setup.py --redeploy          # Redeploy to pick up code changes or .env changes
 ```
 
 ### Viewing Logs
@@ -407,8 +408,8 @@ VOICE_MODEL=aura-2-thalia-en   # Default: aura-2-thalia-en
 TTS_PROVIDER=deepgram           # Default: deepgram
 ```
 
-For Fly.io deployments, run `python setup.py` and select "Redeploy" to sync
-your `.env` changes to the deployed app.
+For Fly.io deployments, run `python setup.py --redeploy`to sync
+any `.env` changes to the deployed app.
 
 For available LLM models, see the [Voice Agent LLM docs](https://developers.deepgram.com/docs/voice-agent-llm-models).
 For available TTS models, see the [Voice Agent TTS docs](https://developers.deepgram.com/docs/voice-agent-tts-models).
